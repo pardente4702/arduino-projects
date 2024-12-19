@@ -122,6 +122,7 @@ uint32_t ldrUpdateInterval = 60000;
 uint32_t seconds[2];
 */
 
+// Sostituisce i caratteri accentati
 String replaceAccentedCharacters(const String &input)
 {
   String output = input;
