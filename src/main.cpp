@@ -114,14 +114,6 @@ uint32_t dateTimeUpdateInterval = 900000;
 uint32_t tempHumUpdateInterval = 30000;
 uint32_t ldrUpdateInterval = 60000;
 
-/*
-#define POLL_INTERVAL 2 // Time between searches (minutes)
-#define MIN_TIME 5      // Skip arrivals sooner than this (minutes)
-#define READ_TIMEOUT 15 // Cancel query if no data received (seconds)
-
-uint32_t seconds[2];
-*/
-
 // Sostituisce i caratteri accentati
 String replaceAccentedCharacters(const String &input)
 {
@@ -537,8 +529,6 @@ void refreshDisplay()
     }
   }
 
-  // if (t.hour() != h)
-  //{
   if (t.second() != s)
   {
     // Avviso acustico ogni ora
@@ -552,30 +542,20 @@ void refreshDisplay()
     matrix.print(leftPad(t.hour(), 2));
     matrix.setCursor(22, 24);
     matrix.print(":");
-    // Serial.println("aggiornato campo ore");
-    // h = t.hour();
-    //}
-
-    // if (t.minute() != m)
-    //{
+    
     matrix.fillRect(26, 24, 12, 7, myBLACK);
     matrix.setCursor(26, 24);
-    matrix.setTextColor(matrix.Color333(0, changeBrightness(7), 0));
+    matrix.setTextColor(matrix.Color888(changeBrightness(0), changeBrightness(255), changeBrightness(0)));
     matrix.print(leftPad(t.minute(), 2));
     matrix.setCursor(36, 24);
     matrix.print(":");
-    // Serial.println("aggiornato campo minuti");
-    // m = t.minute();
-    //}
-
-    // if (t.second() != s)
-    //{
+    
     matrix.fillRect(40, 24, 12, 7, myBLACK);
     matrix.setCursor(40, 24);
-    matrix.setTextColor(matrix.Color333(0, changeBrightness(7), changeBrightness(7)));
+    matrix.setTextColor(matrix.Color888(changeBrightness(0), changeBrightness(255), changeBrightness(255)));
     matrix.print(leftPad(t.second(), 2));
     s = t.second();
-    // Serial.println("aggiornato campo secondi");
+    
   }
 }
 
@@ -602,10 +582,6 @@ void scrollingText(String testo)
     xFirstRow = 64;
     newsDisplayed = true;
   }
-  // delay(25);
-  //  Serial.println(xFirstRow);
-  //
-  // yield();
 }
 
 void loop()
