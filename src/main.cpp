@@ -1,9 +1,9 @@
 #include "WiFiEsp.h"
-#include <Adafruit_GFX.h>
+//#include <Adafruit_GFX.h>
 #include <RGBmatrixPanel.h>
 #include "WiFiEspUdp.h"
 #include <NTPClient.h>
-#include <Time.h>
+//#include <Time.h>
 #include <RTClib.h>
 #include "WifiCredentials.h"
 #include <TimeLib.h>
@@ -11,7 +11,7 @@
 #include <SHT21.h>
 #include <RGBmatrixPanel.h>
 #include <SPI.h>
-#include <HTTPClient.h>
+//#include <HTTPClient.h>
 #include <TextFinder.h>
 #include "Arduino.h"
 
@@ -23,10 +23,13 @@
 #define C A2
 #define D A3
 
+#define DATA_SERVER "www.ansa.it"
+#define DATA_PAGE "/lazio/notizie/lazio_rss.xml"
+
 // Definizione del pin a cui è collegato il sensore LDR
 #define LDR_PIN A4 // Pin analogico utilizzato per il LDR
 
-#define BUZZER_PIN 2
+#define BUZZER_PIN 8 // Pin digitale utilizzato per il buzzer
 
 SHT21 sht; // Crea un'istanza della classe SHT2x
 
@@ -48,6 +51,7 @@ TextFinder finder(client);
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
 
 // standard colors
+/*
 uint16_t myRED = matrix.Color333(7, 0, 0);
 uint16_t myGREEN = matrix.Color333(0, 7, 0);
 uint16_t myBLUE = matrix.Color333(0, 0, 7);
@@ -57,6 +61,7 @@ uint16_t myCYAN = matrix.Color333(0, 7, 7);
 uint16_t myMAGENTA = matrix.Color333(7, 0, 7);
 uint16_t myShadow = matrix.Color333(4, 0, 7);
 uint16_t myROSE = matrix.Color333(7, 0, 4);
+*/
 uint16_t myBLACK = matrix.Color333(0, 0, 0);
 
 char buffer_news_titolo[300];
@@ -110,11 +115,11 @@ WiFiEspUDP ntpUDP;
 // Crea un client NTP
 NTPClient timeClient(ntpUDP, "it.pool.ntp.org", 3600, 60000); // UTC offset e intervallo di aggiornamento
 
-uint32_t dateTimeUpdateInterval = 900000;
-uint32_t tempHumUpdateInterval = 30000;
-uint32_t ldrUpdateInterval = 60000;
+uint32_t dateTimeUpdateInterval = 900000;  // 15 minuti
+uint32_t tempHumUpdateInterval = 30000; 
+uint32_t ldrUpdateInterval = 60000; 
 
-// Sostituisce i caratteri accentati
+// Funzione per sostituire i caratteri accentati con l'apostrofo
 String replaceAccentedCharacters(const String &input)
 {
   String output = input;
@@ -130,8 +135,8 @@ String replaceAccentedCharacters(const String &input)
 
 void fetchRSSFeed()
 {
-  char dataServer[] = "www.ansa.it";
-  char dataPage[] = "/lazio/notizie/lazio_rss.xml";
+  char dataServer[] = DATA_SERVER;
+  char dataPage[] = DATA_PAGE;
 
   Serial.print(">> Connecting to ");
   Serial.print(dataServer);
@@ -165,9 +170,9 @@ void fetchRSSFeed()
       Serial.print("news ");
       Serial.print(i);
       Serial.print(": ");
-      finder.find("<title>");
-      finder.find("<![CDATA");
-      finder.getString("[", "]", buffer_news_titolo, sizeof(buffer_news_titolo));
+      finder.find(const_cast<char*>("<title>"));
+      finder.find(const_cast<char*>("<![CDATA"));
+      finder.getString(const_cast<char*>("["),const_cast<char*>("]"), buffer_news_titolo, sizeof(buffer_news_titolo));
 
       /*
       finder.find("<description>");
@@ -188,6 +193,7 @@ void fetchRSSFeed()
   }
 }
 
+// Funzione per stampare lo stato della connessione WiFi
 void printWifiStatus()
 {
   // print the SSID of the network you're attached to
@@ -242,6 +248,7 @@ void setup()
 
   Wire.begin(); // Inizializza il bus I2C
 
+  
   /*
     if (!sht.begin()) {  // Inizializza il sensore
       Serial.println("Errore Modulo SHT");
@@ -265,7 +272,7 @@ void setup()
 
   Serial.println("Modulo RTC Avviato");
 
-  /*
+  
     if (rtc.lostPower())
     {
       Serial.println("Rilevata perdita di orario del modulo RTC");
@@ -275,7 +282,7 @@ void setup()
       // per il 21 gennaio 2014 alle 3 del mattino puoi usare:
       // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
     }
-    */
+    
 
   // commentare la riga seguente. va eseguita solo una volta
   // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -306,8 +313,10 @@ void setup()
   printWifiStatus();
 
   fetchRSSFeed();
+
 }
 
+// Funzione per aggiornare la data e l'ora del modulo RTC
 void updateRTCmodule(int ora, int minuti, int secondi, int giorno, int mese, int anno)
 {
   int rtcYear = rtc.now().year();
@@ -503,7 +512,7 @@ void refreshDisplay()
       int leftSpace = centraStringa((String)wd[t.dayOfTheWeek()]);
       matrix.fillRect(0, 16, 64, 7, myBLACK);
       matrix.setCursor(leftSpace, 16);
-      matrix.setTextColor(matrix.Color333(changeBrightness(7), changeBrightness(7), 0));
+      matrix.setTextColor(matrix.Color888(changeBrightness(255), changeBrightness(255), changeBrightness(0)));
       matrix.print(wd[t.dayOfTheWeek()]);
       Last_UPDATE_DataGiorno = millis();
       dataGiornoState = GIORNO;
@@ -516,13 +525,13 @@ void refreshDisplay()
       int leftSpace = centraStringa("XXXXXXXXX");
       matrix.fillRect(0, 16, 64, 7, myBLACK);
       matrix.setCursor(leftSpace, 16);
-      matrix.setTextColor(matrix.Color333(changeBrightness(7), changeBrightness(7), 0));
+      matrix.setTextColor(matrix.Color888(changeBrightness(255), changeBrightness(255), changeBrightness(0)));
       matrix.print(leftPad(t.day(), 2));
       matrix.setCursor(leftSpace + 12, 16);
-      matrix.setTextColor(matrix.Color333(changeBrightness(7), 0, 0));
+      matrix.setTextColor(matrix.Color888(changeBrightness(255), changeBrightness(0), changeBrightness(0)));
       matrix.print(months[t.month() - 1]);
       matrix.setCursor(leftSpace + 30, 16);
-      matrix.setTextColor(matrix.Color333(0, 0, changeBrightness(7)));
+      matrix.setTextColor(matrix.Color888(changeBrightness(0), changeBrightness(0), changeBrightness(255)));
       matrix.print(t.year());
       Last_UPDATE_DataGiorno = millis();
       dataGiornoState = DATA;
