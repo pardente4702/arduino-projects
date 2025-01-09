@@ -36,6 +36,7 @@ SHT21 sht; // Crea un'istanza della classe SHT2x
 #define luminosita 1
 
 #define NEWS_ITEMS_VIEWED 20
+#define NEWS_UPDATE_INTERVAL 900000 // 15 minuti
 
 int ldrValue = 20;
 
@@ -96,6 +97,7 @@ int xFirstRow = 64;
 int status = WL_IDLE_STATUS; // the Wifi radio's status
 
 unsigned long lastUpdateDateTime = 0; // Vecchio valore di millis()
+unsigned long lastUpdateNews = 0;     // Vecchio valore di millis()
 unsigned long lastUpdateTempHum = 0;  // Vecchio valore di millis()
 unsigned long Last_UPDATE_DataGiorno = 0;
 unsigned long Last_UPDATE_TempHumid = 0;
@@ -116,6 +118,7 @@ WiFiEspUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "it.pool.ntp.org", 3600, 60000); // UTC offset e intervallo di aggiornamento
 
 uint32_t dateTimeUpdateInterval = 900000;  // 15 minuti
+uint32_t newsUpdateInterval = NEWS_UPDATE_INTERVAL;  // 15 minuti
 uint32_t tempHumUpdateInterval = 30000; 
 uint32_t ldrUpdateInterval = 60000; 
 
@@ -186,10 +189,15 @@ void fetchRSSFeed()
       // Serial.println(buffer_news_descr);
     }
 
+    newsUpdateInterval = NEWS_UPDATE_INTERVAL;
+
     client.stop();
     client.flush();
     // yield();
     Serial.println();
+  } else {
+    // Provo a riscaricare le notizie
+    newsUpdateInterval = 60000;
   }
 }
 
@@ -593,6 +601,7 @@ void scrollingText(String testo)
   }
 }
 
+// loop principale
 void loop()
 {
 
@@ -600,8 +609,12 @@ void loop()
   {
     GetDateTimeFromNTPServer();
     lastUpdateDateTime = millis();
+  }
 
+  if ((millis() > lastUpdateNews + newsUpdateInterval) && (WiFi.status() == WL_CONNECTED))
+  {
     fetchRSSFeed();
+    lastUpdateNews = millis();
   }
 
   if (millis() > lastReadingLDR + ldrUpdateInterval)
