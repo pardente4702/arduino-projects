@@ -35,10 +35,11 @@ SHT21 sht; // Crea un'istanza della classe SHT2x
 
 #define luminosita 1
 
-#define NEWS_ITEMS_VIEWED 20
+//#define NEWS_ITEMS_VIEWED 20
 #define NEWS_UPDATE_INTERVAL 900000 // 15 minuti
 
 int ldrValue = 20;
+int newsScaricate = 0;
 
 WiFiEspClient client;
 TextFinder finder(client);
@@ -108,7 +109,7 @@ time_t epochTime; // Secondi trascorsi dal 01/01/1970
 
 boolean newsDisplayed = false;
 
-String arrayNotizie[NEWS_ITEMS_VIEWED]; // = {"prima news", "seconda news", "terza news", "quarta news", "quinta news"};
+String arrayNotizie[50]  = {"waiting to download news..."};
 uint8_t indiceArrayNotizie = 0;
 
 RTC_DS3231 rtc;
@@ -168,12 +169,14 @@ void fetchRSSFeed()
   if (client.connected())
   {
 
-    for (int i = 0; i < NEWS_ITEMS_VIEWED; i++)
+    // for (int i = 0; i < NEWS_ITEMS_VIEWED; i++)
+    int i = 1;
+    newsScaricate = 0;
+    while (true)
     {
-      Serial.print("news ");
-      Serial.print(i);
-      Serial.print(": ");
-      finder.find(const_cast<char*>("<title>"));
+      if (!finder.find(const_cast<char*>("<item>"))) {
+        break;
+      }
       finder.find(const_cast<char*>("<![CDATA"));
       finder.getString(const_cast<char*>("["),const_cast<char*>("]"), buffer_news_titolo, sizeof(buffer_news_titolo));
 
@@ -182,9 +185,14 @@ void fetchRSSFeed()
       finder.find("<![CDATA");
       finder.getString("[", "]", buffer_news_descr, sizeof(buffer_news_descr));
       */
+      Serial.print("news ");
+      Serial.print(i);
+      Serial.print(": ");
       Serial.println(buffer_news_titolo);
       String replaced = replaceAccentedCharacters(buffer_news_titolo);
       arrayNotizie[i] = replaced;
+      i=i+1;
+      newsScaricate = newsScaricate + 1;
       // Serial.print("-");
       // Serial.println(buffer_news_descr);
     }
@@ -644,7 +652,7 @@ void loop()
   {
     indiceArrayNotizie = indiceArrayNotizie + 1;
     newsDisplayed = false;
-    if (indiceArrayNotizie >= NEWS_ITEMS_VIEWED)
+    if (indiceArrayNotizie >= newsScaricate)
     {
       indiceArrayNotizie = 0;
     }
