@@ -573,6 +573,10 @@ void refreshDisplay()
     matrix.print(leftPad(t.second(), 2));
     s = t.second();
     
+  } else {
+    // Cancella i punti dell'orologio
+    matrix.fillRect(23, 24, 3, 7, myBLACK);
+    matrix.fillRect(37, 24, 3, 7, myBLACK);
   }
 }
 
