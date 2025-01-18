@@ -548,7 +548,7 @@ void refreshDisplay()
 
   if (t.second() != s)
   {
-    // Avviso acustico ogni ora
+    // Riproduce beep ogni ora
     if (t.second() == 0 and t.minute() == 0)
     {
       playSound();
