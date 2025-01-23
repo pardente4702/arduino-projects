@@ -14,6 +14,8 @@
 //#include <HTTPClient.h>
 #include <TextFinder.h>
 #include "Arduino.h"
+#include <List.hpp>
+
 
 #define CLK 11 // USE THIS ON ARDUINO MEGA
 #define OE 9
@@ -35,8 +37,11 @@ SHT21 sht; // Crea un'istanza della classe SHT2x
 
 #define luminosita 1
 
-//#define NEWS_ITEMS_VIEWED 20
+//#define MAX_NEWS_ITEMS_VIEWED 30
 #define NEWS_UPDATE_INTERVAL 900000 // 15 minuti
+
+// Create an immutable list
+List<String> newsList;
 
 int ldrValue = 20;
 int newsScaricate = 0;
@@ -66,7 +71,7 @@ uint16_t myROSE = matrix.Color333(7, 0, 4);
 */
 uint16_t myBLACK = matrix.Color333(0, 0, 0);
 
-char buffer_news_titolo[300];
+char buffer_news_titolo[200];
 // char buffer_news_descr[300];
 
 const char *months[] = {"Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"};
@@ -109,7 +114,7 @@ time_t epochTime; // Secondi trascorsi dal 01/01/1970
 
 boolean newsDisplayed = false;
 
-String arrayNotizie[50]  = {"waiting to download news..."};
+//String arrayNotizie[30]  = {"waiting to download news ..."};
 uint8_t indiceArrayNotizie = 0;
 
 RTC_DS3231 rtc;
@@ -145,6 +150,7 @@ void fetchRSSFeed()
   Serial.print(">> Connecting to ");
   Serial.print(dataServer);
   Serial.println(dataPage);
+  client.stop();
   if (!client.connect(dataServer, 80))
   {
     Serial.println(">> Connection Failed !");
@@ -158,23 +164,25 @@ void fetchRSSFeed()
 
   String url = dataPage;
 
+  client.setTimeout(1000);
   Serial.print(">> Requesting URL: ");
   Serial.println(dataPage);
 
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
                "User-Agent: Mozilla/4.0\r\n" +
                "Connection: close\r\n\r\n");
+  //Serial.println("prima del connected");
   // unsigned long timeout = millis();
-
   if (client.connected())
   {
-
-    // for (int i = 0; i < NEWS_ITEMS_VIEWED; i++)
-    int i = 1;
     newsScaricate = 0;
+    indiceArrayNotizie = 0;
+    Serial.println("Removing old news...");
+    newsList.removeAll();
+    int i = 0;
     while (true)
     {
-      if (!finder.find(const_cast<char*>("<item>"))) {
+      if (!finder.find(const_cast<char*>("<title>"))) {
         break;
       }
       finder.find(const_cast<char*>("<![CDATA"));
@@ -190,7 +198,8 @@ void fetchRSSFeed()
       Serial.print(": ");
       Serial.println(buffer_news_titolo);
       String replaced = replaceAccentedCharacters(buffer_news_titolo);
-      arrayNotizie[i] = replaced;
+      //arrayNotizie[i] = replaced;
+      newsList.add(replaced);
       i=i+1;
       newsScaricate = newsScaricate + 1;
       // Serial.print("-");
@@ -204,7 +213,7 @@ void fetchRSSFeed()
     // yield();
     Serial.println();
   } else {
-    // Provo a riscaricare le notizie
+    Serial.println("Provo a riscaricare le news");
     newsUpdateInterval = 60000;
   }
 }
@@ -329,6 +338,12 @@ void setup()
   printWifiStatus();
 
   fetchRSSFeed();
+  Serial.print("Downloaded news: ");
+  Serial.println(newsList.getSize());
+  if (newsList.getSize() == 0)
+  {
+    newsList.add("Nessuna notizia disponibile");
+  }
 
 }
 
@@ -626,6 +641,8 @@ void loop()
   if ((millis() > lastUpdateNews + newsUpdateInterval) && (WiFi.status() == WL_CONNECTED))
   {
     fetchRSSFeed();
+    Serial.print("Downloaded news: ");
+    Serial.println(newsList.getSize());
     lastUpdateNews = millis();
   }
 
@@ -657,5 +674,5 @@ void loop()
       indiceArrayNotizie = 0;
     }
   }
-  scrollingText(arrayNotizie[indiceArrayNotizie]);
+  scrollingText(newsList.get(indiceArrayNotizie));
 }
