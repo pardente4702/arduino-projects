@@ -674,5 +674,6 @@ void loop()
       indiceArrayNotizie = 0;
     }
   }
+  
   scrollingText(newsList.get(indiceArrayNotizie));
 }
