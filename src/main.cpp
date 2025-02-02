@@ -657,6 +657,7 @@ void loop()
     lastReadingLDR = millis();
   }
 
+  // Aggiorna il display
   refreshDisplay();
 
   if (millis() > lastUpdateTempHum + tempHumUpdateInterval)
